@@ -27,6 +27,28 @@ describe("a", function()
         assert.are.equal(42, calledWith)
     end)
 
+    it("passes nil to the function", function()
+        local f = a.sync(function(a, b, c)
+            assert.are.equal(a, 1)
+            assert.are.equal(b, nil)
+            assert.are.equal(c, 3)
+        end)
+
+        f(1, nil, 3)()
+    end)
+
+    it("returns nil from the function", function()
+        local f = a.sync(function()
+            return 1, nil, 3
+        end)
+
+        f()(function(a, b, c)
+            assert.are.equal(a, 1)
+            assert.are.equal(b, nil)
+            assert.are.equal(c, 3)
+        end)
+    end)
+
     it("wrap provides callback to function", function()
         local f = a.wrap(function(n, cb)
             cb(n + 1)
@@ -38,6 +60,17 @@ describe("a", function()
         end)
 
         assert.are.equal(42, calledWith)
+    end)
+
+    it("wrap passes nil to function", function()
+        local f = a.wrap(function(a, b, c, cb)
+            assert.are.equal(a, 1)
+            assert.are.equal(b, nil)
+            assert.are.equal(c, 3)
+            cb()
+        end)
+
+        f(1, nil, 3)(function() end)
     end)
 
     it("await returns result of function", function()

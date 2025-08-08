@@ -2,21 +2,20 @@ local co = coroutine
 
 function async(f)
     return function(...)
-        local params = {...}
+        local params = table.pack(...)
         local thread = co.create(function()
-            return f(table.unpack(params))
+            return f(table.unpack(params, 1, params.n))
         end)
 
         return function(cb)
             local step = nil
             step = function(...)
-                local result = {co.resume(thread, ...)}
-                table.remove(result, 1)
+                local result = table.pack(co.resume(thread, ...))
 
                 if co.status(thread) == "dead" then
-                    cb(table.unpack(result))
+                    (cb or function() end)(table.unpack(result, 2, result.n))
                 else
-                    local f = table.unpack(result)
+                    local f = result[2]
                     assert(type(f) == "function", "type error :: expected func")
                     f(step)
                 end
@@ -28,10 +27,10 @@ end
 
 function wrap(f)
     return function(...)
-        local params = {...}
+        local params = table.pack(...)
         return function(cb)
-            table.insert(params, cb)
-            f(table.unpack(params))
+            table.insert(params, params.n + 1, cb)
+            f(table.unpack(params, 1, params.n + 1))
         end
     end
 end
